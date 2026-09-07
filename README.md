@@ -1,63 +1,145 @@
 # CyberSecurityRSS
-[中文文档](https://github.com/zer0yu/CyberSecurityRSS/blob/master/README.zh-CN.md)
 
-Introduction: RSS subscriptions related to cybersecurity, helping to establish personal intelligence sources and daily knowledge base updates.
+[![Stars](https://img.shields.io/github/stars/zer0yu/CyberSecurityRSS?style=flat-square)](https://github.com/zer0yu/CyberSecurityRSS/stargazers)
+[![Forks](https://img.shields.io/github/forks/zer0yu/CyberSecurityRSS?style=flat-square)](https://github.com/zer0yu/CyberSecurityRSS/network/members)
+[![Last Commit](https://img.shields.io/github/last-commit/zer0yu/CyberSecurityRSS?style=flat-square)](https://github.com/zer0yu/CyberSecurityRSS/commits/master)
+[![OPML Sync](https://img.shields.io/github/actions/workflow/status/zer0yu/CyberSecurityRSS/opml-sync.yml?branch=master&style=flat-square&label=opml-sync)](https://github.com/zer0yu/CyberSecurityRSS/actions/workflows/opml-sync.yml)
 
-The update frequency: every 2 months.
+A curated cybersecurity + AI RSS/Atom OPML collection for building a high-signal daily intelligence workflow.
 
-File description:
+This repository provides a high-signal intelligence pipeline based on **Dual Data Sources** (Security RSS + Twitter/X Researchers):
 
-1. The others.md file adds some sites without rss subscription, but the site content is very good, so list them separately.
+| Tier | Scale | Content |
+|------|-------|---------|
+| 📡 RSS (Tiny) | 494 Feeds | `tiny.opml` — Focused daily reading including AI, WebSecurity, RedTeam, Reverse, Pwn... (9 categories) |
+| 📡 RSS (Full) | 1000+ Feeds | `CyberSecurityRSS.opml` — Comprehensive coverage across 12 categories |
 
-2. The tiny.opml file is a streamlined version of the secure RSS subscription for cyberspace.
+[中文文档](README.zh-CN.md)
 
-3. The Cyber​​SecurityRSS.xml file is a rich version of cyberspace security RSS subscription, which involves all aspects of cyberspace security.
+## Highlights
 
-PS: If you encounter problems with the format of the imported file, you can modify the xml suffix to opml suffix, or modify the opml suffix to xml suffix.
+- Two profiles for different reading budgets:
+  - `tiny.opml`: focused daily reading (currently 494 feeds / 9 categories)
+  - `CyberSecurityRSS.opml`: broad coverage (currently ~1014 feeds / 12 categories)
+- Practical security coverage across vulnerability research, red team, reverse engineering, web security, threat news, and more.
+- Automation-first maintenance: dead feed cleanup, deduplication, and tiny -> full sync.
+- Ready for both manual reading and AI-assisted daily digest pipelines.
 
+## Quick Start
+
+1. Choose your feed set:
+   - Low-noise daily reading: `tiny.opml`
+   - Full coverage: `CyberSecurityRSS.opml`
+2. Import the OPML file into your favorite reader.
+3. Start tracking updates as your personal security knowledge base.
+
+### Reader Examples
+
+- Reeder (macOS / iOS)
+- Feedly (Web / iOS / Android)
+- [yarr](https://github.com/nkanaev/yarr) (self-hosted, cross-platform)
+- Feeder / Zr / Anyant / Leaf
+
+## Files
+
+- `tiny.opml`: streamlined high-signal security feed set.
+- `CyberSecurityRSS.opml`: full feed set with wider topic coverage.
+- `others.md`: hand-picked useful sites, including some without RSS.
+
+## AI Daily Digest (OpenClaw / Claude Code)
+
+You can combine this repository with the Skills in [zer0yu/sec-daily-digest](https://github.com/zer0yu/sec-daily-digest) to generate an automated **curated daily cybersecurity digest**.
+
+Recommended workflow:
+
+1. Install sec-daily-digest Skills in OpenClaw or Claude Code (follow that repository's guide).
+2. Use `tiny.opml` as default input (or `CyberSecurityRSS.opml` for broader coverage).
+3. Run once per day (for example, every morning) with a 24-hour time window.
+4. Output a structured report, such as:
+   - Top picks
+   - Vulnerabilities & exploitation
+   - Threat intelligence & incidents
+   - Research / tooling
+   - Actionable takeaways
+
+Prompt example:
+
+```text
+Use CyberSecurityRSS feeds to generate a curated daily security digest for the last 24 hours.
+Keep only high-signal items, group by topic, and include title, why-it-matters, and source URL.
 ```
-cp CyberSecurityRSS.xml CyberSecurityRSS.opml
+
+## Repository Automation
+
+This repository uses GitHub Actions to keep OPML files healthy and synced:
+
+1. `pull_request -> master`: runs in `check` mode and fails when OPML drift is detected.
+2. `push -> master`: runs in `apply` mode:
+   - Validate RSS/Atom feed URLs in `tiny.opml` and `CyberSecurityRSS.opml`.
+   - Remove dead feed entries and deduplicate by `xmlUrl`.
+   - Sync valid feeds from `tiny.opml` into `CyberSecurityRSS.opml`.
+   - Fallback missing categories to `Misc`.
+   - Keep `.github/opml-health-state.json` and only remove feeds after consecutive hard failures.
+   - Auto-commit OPML changes with `[skip ci]`.
+
+## Local Validation
+
+```bash
+python3 -m unittest discover -s tests -v
+
+python3 scripts/opml_sync.py \
+  --mode check \
+  --tiny tiny.opml \
+  --full CyberSecurityRSS.opml \
+  --fallback-category Misc \
+  --timeout 10 \
+  --retries 3
+```
+
+## Add New RSS Into tiny.opml (Interactive)
+
+Use this helper script when you discover a new feed URL:
+
+```bash
+uv run python scripts/add_feed_to_tiny.py
+```
+
+Default behavior:
+
+- Runs `git pull --ff-only` first to reduce local/remote drift before editing.
+- Prints current top-level categories in `tiny.opml`.
+- Lets you select a category by number or type a new name (auto-create).
+- Fetches feed metadata (title/site link) from your RSS URL, then appends it.
+
+Common options:
+
+```bash
+# Non-interactive
+uv run python scripts/add_feed_to_tiny.py \
+  --url "https://example.com/feed.xml" \
+  --category "ThreatIntel"
+
+# Skip startup git pull
+uv run python scripts/add_feed_to_tiny.py --no-git-pull
+```
+
+## OPML/XML Compatibility
+
+Some readers only accept a specific extension. You can safely rename files:
+
+```bash
+cp CyberSecurityRSS.opml CyberSecurityRSS.xml
 cp tiny.opml tiny.xml
 ```
 
-## Usage 1-Reeder5 (macOS, IOS preferred)
-import OMPL into Reeder `Subcsriptions -> Import from OMPL`
+## Contributing
 
-![image.png](https://i.loli.net/2021/12/03/gqE4OoGtCfS762D.png)
+Contributions are welcome.
 
-## Usage 2 - [yarr](https://github.com/nkanaev/yarr) (macOS, Windows, Linux)
-
-![截屏2020-10-06 上午9.56.09.png](https://i.loli.net/2020/10/06/p9udsMkOQmHAtI8.png)
-
-## Usage 3 - Leaf
-
-Import the file directly to use it.
-
-![屏幕快照 2019-04-02 下午4.04.14.png](https://i.loli.net/2019/04/02/5ca317954382b.png)
-
-## Usage 4 - Feedly
-
-![截屏2021-02-06 下午7.29.44.png](https://i.loli.net/2021/02/06/X6Jkat3O2YcFPvK.png)
-
-## Usage 6 - Feeder(Recommended for Android users)
-
-Use the same way as Usage 1
-
-## Usage 6 - [Zr](https://www.coolapk.com/apk/176794)(Recommended for Android users)
-
-Use the same way as Usage 1
-
-## Usage 7 - [anyant](https://rss.anyant.com/)(Web Online)
-
-Use the same way as Usage 1
-
-![7.png](https://i.loli.net/2021/02/10/pHdIEztoOUeVxv3.png)
-
-## Contribution
-
-If you find a great site, please submit an issue or pr
+- Submit an Issue or PR for high-quality feeds.
+- Include feed URL, category suggestion, and why it is valuable.
+- Run local checks before opening the PR.
 
 ## Sponsor
 
 [![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
-
